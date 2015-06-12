@@ -559,6 +559,6 @@ def all_local_stratum0():
 def open_repository(repository_path, public_key = None):
     """ wrapper function accessing a repository by URL, local FQRN or path """
     repo = Repository(repository_path)
-    if public_key and not repo.verify(public_key):
-        return None
+    if public_key:
+        repo.verify(public_key)
     return repo
