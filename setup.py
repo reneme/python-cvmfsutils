@@ -9,8 +9,8 @@ setup(
   url='http://cernvm.cern.ch',
   author='Rene Meusel',
   author_email='rene.meusel@cern.ch',
-  license='(c) 2014 CERN - BSD License',
-  description='Inspect CernVM-FS repositories and in particular their catalogs.',
+  license='(c) 2015 CERN - BSD License',
+  description='Inspect CernVM-FS repositories',
   long_description=open('README').read(),
   classifiers= [
     'Development Status :: 4 - Beta',
@@ -20,6 +20,7 @@ setup(
     'License :: OSI Approved :: BSD License',
     'Natural Language :: English',
     'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS :: MacOS X',
     'Topic :: Software Development',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: System :: Filesystems',
