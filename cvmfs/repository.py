@@ -459,6 +459,7 @@ class Repository(object):
 
 
     def verify(self, public_key_path):
+        """ Use a public key to verify the repository's authenticity """
         whitelist   = self.retrieve_whitelist()
         certificate = self.retrieve_certificate()
         if not whitelist.verify_signature(public_key_path):
@@ -492,11 +493,13 @@ class Repository(object):
 
 
     def retrieve_whitelist(self):
+        """ retrieve and parse the .cvmfswhitelist file from the repository """
         whitelist = self._fetcher.retrieve_raw_file(_common._WHITELIST_NAME)
         return Whitelist(whitelist)
 
 
     def retrieve_certificate(self):
+        """ retrieve the repository's certificate file """
         certificate = self.retrieve_object(self.manifest.certificate, 'X')
         return Certificate(certificate)
 
@@ -554,6 +557,7 @@ def all_local_stratum0():
     return [ repo for repo in all_local() if repo.type == 'stratum0' ]
 
 def open_repository(repository_path, public_key = None):
+    """ wrapper function accessing a repository by URL, local FQRN or path """
     repo = Repository(repository_path)
     if public_key and not repo.verify(public_key):
         return None
