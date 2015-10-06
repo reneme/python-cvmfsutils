@@ -435,8 +435,11 @@ class Repository(object):
 
 
     @staticmethod
-    def __read_timestamp(timestamp_string):
-        return dateutil.parser.parse(timestamp_string)
+    def __read_timestamp(self, timestamp_string):
+        local_ts = dateutil.parser.parse(timestamp_string,
+                                         ignoretz=False,
+                                         tzinfos=_common.TzInfos.get_tzinfos())
+        return local_ts.astimezone(tzutc())
 
 
     def _try_to_get_last_replication_timestamp(self):
