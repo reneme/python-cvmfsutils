@@ -17,6 +17,7 @@ import shutil
 import zlib
 
 import _common
+import cvmfs
 from manifest import Manifest
 from catalog import Catalog
 from history import History
@@ -365,19 +366,21 @@ class RemoteFetcher(Fetcher):
 
     def __init__(self, repo_url, cache_dir=''):
         super(RemoteFetcher, self).__init__(repo_url, cache_dir)
+        self._user_agent      = cvmfs.__package_name__ + "/" + cvmfs.__version__
+        self._default_headers = { 'User-Agent': self._user_agent }
 
-    @staticmethod
-    def _download_content_and_store(cached_file, file_url):
-        response = requests.get(file_url, stream=True)
+    def _download_content_and_store(self, cached_file, file_url):
+        response = requests.get(file_url, stream=True,
+                                          headers=self._default_headers)
         if response.status_code != requests.codes.ok:
             raise FileNotFoundInRepository(file_url)
         for chunk in response.iter_content(chunk_size=4096):
             if chunk:
                 cached_file.write(chunk)
 
-    @staticmethod
-    def _download_content_and_decompress(cached_file, file_url):
-        response = requests.get(file_url, stream=False)
+    def _download_content_and_decompress(self, cached_file, file_url):
+        response = requests.get(file_url, stream=False,
+                                          headers=self._default_headers)
         if response.status_code != requests.codes.ok:
             raise FileNotFoundInRepository(file_url)
         decompressed_content = zlib.decompress(response.content)
