@@ -524,7 +524,7 @@ class Repository(object):
         """ Recursively walk down the Catalogs and find the best fit for a path """
         clg = self.retrieve_root_catalog()
         while True:
-            new_nested_reference = clg.FindNestedForPath(needle_path)
+            new_nested_reference = clg.find_nested_for_path(needle_path)
             if new_nested_reference is None:
                 break
             nested_reference = new_nested_reference
