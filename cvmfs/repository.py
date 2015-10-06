@@ -435,7 +435,7 @@ class Repository(object):
 
 
     @staticmethod
-    def __read_timestamp(self, timestamp_string):
+    def __read_timestamp(timestamp_string):
         local_ts = dateutil.parser.parse(timestamp_string,
                                          ignoretz=False,
                                          tzinfos=_common.TzInfos.get_tzinfos())
