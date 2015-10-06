@@ -28,6 +28,7 @@ setup(
   ],
   packages=find_packages(),
   test_suite='cvmfs.test',
+  tests_require='xmlrunner',
   install_requires=[ # don't forget to adapt the matching RPM dependencies!
     'python-dateutil >= 1.4.1',
     'requests >= 1.1.0',
