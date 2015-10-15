@@ -12,18 +12,7 @@ from M2Crypto import RSA
 import re
 
 from root_file import RootFile
-
-class UnknownWhitelistLine(Exception):
-    def __init__(self, line):
-        Exception.__init__(self, line)
-
-class WhitelistValidityError(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
-
-class InvalidWhitelistTimestamp(Exception):
-    def __init__(self, timestamp):
-        Exception.__init__(self, timestamp)
+from _exceptions import *
 
 
 class Whitelist(RootFile):

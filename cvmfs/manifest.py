@@ -10,17 +10,6 @@ from dateutil.tz import tzutc
 
 from root_file import RootFile
 
-class UnknownManifestField(Exception):
-    def __init__(self, key_char):
-        self.key_char = key_char
-
-    def __str__(self):
-        return self.key_char
-
-class ManifestValidityError(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
-
 
 class Manifest(RootFile):
     """ Wraps information from .cvmfspublished """

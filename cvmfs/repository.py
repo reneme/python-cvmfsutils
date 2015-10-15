@@ -23,65 +23,7 @@ from catalog import Catalog
 from history import History
 from whitelist import Whitelist
 from certificate import Certificate
-
-class RepositoryNotFound(Exception):
-    def __init__(self, repo_path):
-        self.path = repo_path
-
-    def __str__(self):
-        return self.path + " not found"
-
-class UnknownRepositoryType(Exception):
-    def __init__(self, repo_fqrn, repo_type):
-        self.fqrn = repo_fqrn
-        self.type = repo_type
-
-    def __str__(self):
-        return self.fqrn + " (" + self.type + ")"
-
-class ConfigurationNotFound(Exception):
-    def __init__(self, repo, config_field):
-        self.repo         = repo
-        self.config_field = config_field
-
-    def __str__(self):
-        return repr(self.repo) + " " + self.config_field
-
-class FileNotFoundInRepository(Exception):
-    def __init__(self, file_name):
-        self.file_name = file_name
-
-    def __str__(self):
-        return repr(self.file_name)
-
-class HistoryNotFound(Exception):
-    def __init__(self, repo):
-        self.repo = repo
-
-    def __str__(self):
-        return repr(self.repo)
-
-class CannotReplicate(Exception):
-    def __init__(self, repo):
-        self.repo = repo
-
-    def __str__(self):
-        return repr(self.repo)
-
-class NestedCatalogNotFound(Exception):
-    def __init__(self, repo):
-        self.repo = repo
-
-    def __str__(self):
-        return repr(self.repo)
-
-class RepositoryVerificationFailed(Exception):
-    def __init__(self, message, repo):
-        Exception.__init__(self, message)
-        self.repo = repo
-
-    def __str__(self):
-        return self.args[0] + " (Repo: " + repr(self.repo) + ")"
+from _exceptions import *
 
 
 class RepositoryIterator(object):
