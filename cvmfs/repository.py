@@ -305,8 +305,8 @@ def all_local_stratum0():
 
 def open_repository(repository_path, **kwargs):
     """ wrapper function accessing a repository by URL, local FQRN or path """
-    cache_dir  = kwargs['cache_dir']  if 'cache_dir'  in kwargs.keys() else None
-    public_key = kwargs['public_key'] if 'public_key' in kwargs.keys() else None
+    cache_dir  = kwargs['cache_dir']  if 'cache_dir'  in kwargs else None
+    public_key = kwargs['public_key'] if 'public_key' in kwargs else None
     repo = Repository(repository_path, cache_dir)
     if public_key:
         repo.verify(public_key)
