@@ -225,6 +225,20 @@ class Cache(object):
         pass
 
 
+class DummyCache(Cache):
+    """ A dummy cache uses temporary storage without actual cache logic """
+
+    def get(self, file_name):
+        return None
+
+    def transaction(self, file_name):
+        return tempfile.NamedTemporaryFile("w+b")
+
+    def commit(self, resource):
+        resource.seek(0)
+        return resource
+
+
 class DiskCache(Cache):
     """ Maintains a fully functional and reusable disk cache """
 
@@ -245,6 +259,7 @@ class DiskCache(Cache):
         def commit(self):
             super(DiskCache.TransactionFile, self).close()
             os.rename(self.name, self.__final_destination_path)
+            return open(self.__final_destination_path, "rb")
 
     def __init__(self, cache_dir):
         if not os.path.exists(cache_dir):
@@ -290,7 +305,7 @@ class DiskCache(Cache):
         return DiskCache.TransactionFile(full_path, tmp_dir)
 
     def commit(self, resource):
-        resource.close()
+        return resource.commit()
 
     def get(self, file_name):
         full_path = os.path.join(self._cache_dir, file_name)
@@ -310,7 +325,7 @@ class Fetcher(object):
     __metadata__ = abc.ABCMeta
 
     def __init__(self, source, cache_dir = None):
-        self.__cache = DiskCache(cache_dir) if cache_dir else None
+        self.__cache = DiskCache(cache_dir) if cache_dir else DummyCache()
         self.source = source
 
     def _make_file_uri(self, file_name):
@@ -341,21 +356,14 @@ class Fetcher(object):
         """
         return self._retrieve(file_name, self._retrieve_raw_file)
 
-    def _cached_retrieve(self, file_name, retrieve_fn):
-        cached_file_ro = self.__cache.get(file_name)
-        if not cached_file_ro:
-            cached_file_rw = self.__cache.transaction(file_name)
-            retrieve_fn(file_name, cached_file_rw)
-            self.__cache.commit(cached_file_rw)
-        return self.__cache.get(file_name)
-
     def _retrieve(self, file_name, retrieve_fn):
-        if self.__cache:
-            return self._cached_retrieve(file_name, retrieve_fn)
-        tmp_file = tempfile.NamedTemporaryFile("w+b")
-        retrieve_fn(file_name, tmp_file)
-        tmp_file.seek(0)
-        return tmp_file
+        cached_file_ro = self.__cache.get(file_name)
+        if cached_file_ro:
+            return cached_file_ro
+
+        cached_file_rw = self.__cache.transaction(file_name)
+        retrieve_fn(file_name, cached_file_rw)
+        return self.__cache.commit(cached_file_rw)
 
 
     @abc.abstractmethod
