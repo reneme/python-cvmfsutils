@@ -5,16 +5,11 @@ Created by René Meusel
 This file is part of the CernVM File System auxiliary tools.
 """
 
-import abc
 import os
-import tempfile
-import requests
 import collections
 from datetime import datetime
 import dateutil.parser
 from dateutil.tz import tzutc
-import shutil
-import zlib
 
 import _common
 import cvmfs
@@ -23,65 +18,8 @@ from catalog import Catalog
 from history import History
 from whitelist import Whitelist
 from certificate import Certificate
-
-class RepositoryNotFound(Exception):
-    def __init__(self, repo_path):
-        self.path = repo_path
-
-    def __str__(self):
-        return self.path + " not found"
-
-class UnknownRepositoryType(Exception):
-    def __init__(self, repo_fqrn, repo_type):
-        self.fqrn = repo_fqrn
-        self.type = repo_type
-
-    def __str__(self):
-        return self.fqrn + " (" + self.type + ")"
-
-class ConfigurationNotFound(Exception):
-    def __init__(self, repo, config_field):
-        self.repo         = repo
-        self.config_field = config_field
-
-    def __str__(self):
-        return repr(self.repo) + " " + self.config_field
-
-class FileNotFoundInRepository(Exception):
-    def __init__(self, file_name):
-        self.file_name = file_name
-
-    def __str__(self):
-        return repr(self.file_name)
-
-class HistoryNotFound(Exception):
-    def __init__(self, repo):
-        self.repo = repo
-
-    def __str__(self):
-        return repr(self.repo)
-
-class CannotReplicate(Exception):
-    def __init__(self, repo):
-        self.repo = repo
-
-    def __str__(self):
-        return repr(self.repo)
-
-class NestedCatalogNotFound(Exception):
-    def __init__(self, repo):
-        self.repo = repo
-
-    def __str__(self):
-        return repr(self.repo)
-
-class RepositoryVerificationFailed(Exception):
-    def __init__(self, message, repo):
-        Exception.__init__(self, message)
-        self.repo = repo
-
-    def __str__(self):
-        return self.args[0] + " (Repo: " + repr(self.repo) + ")"
+from fetcher import RemoteFetcher, LocalFetcher
+from _exceptions import *
 
 
 class RepositoryIterator(object):
@@ -198,211 +136,14 @@ class CatalogTreeIterator(object):
 
 
 
-class Cache(object):
-
-    class TransactionFile(file):
-        """ Wrapper around a writable file. The actual file will be renamed
-        to a different location once it is closed
-        """
-
-        def __init__(self, name, tmp_dir):
-            self.__final_destination_path = name
-            temp_file_path = tempfile.mktemp(dir=tmp_dir, prefix='tmp.')
-            super(Cache.TransactionFile, self).__init__(temp_file_path, 'w+')
-
-        def __del__(self):
-            if not self.closed:
-                self.close()
-
-        def close(self):
-            super(Cache.TransactionFile, self).close()
-            os.rename(self.name, self.__final_destination_path)
-
-    def __init__(self, cache_dir):
-        if not os.path.exists(cache_dir):
-            cache_dir = tempfile.mkdtemp(dir='/tmp', prefix='cache.')
-        self._cache_dir = cache_dir
-        self._create_cache_structure()
-        self._cleanup_metadata()
-
-    def _cleanup_metadata(self):
-        metadata_file_list = [
-            os.path.join(self._cache_dir, _common._MANIFEST_NAME),
-            os.path.join(self._cache_dir, _common._LAST_REPLICATION_NAME),
-            os.path.join(self._cache_dir, _common._REPLICATING_NAME),
-            os.path.join(self._cache_dir, _common._WHITELIST_NAME)
-        ]
-        for metadata_file in metadata_file_list:
-            try:
-                os.remove(metadata_file)
-            except OSError:
-                pass
-
-    def _create_dir(self, path):
-        cache_full_path = os.path.join(self._cache_dir, path)
-        if not os.path.exists(cache_full_path):
-            os.mkdir(cache_full_path, 0755)
-
-    def _create_cache_structure(self):
-        self._create_dir('data')
-        for i in range(0x00, 0xff + 1):
-            new_folder = '{0:#0{1}x}'.format(i, 4)[2:]
-            self._create_dir(os.path.join('data', new_folder))
-        self._create_dir(os.path.join('data', 'txn'))
-
-    def get_transaction_dir(self):
-        return os.path.join(self._cache_dir, 'data', 'txn')
-
-    def get_cache_path(self):
-        return str(self._cache_dir)
-
-    def transaction(self, file_name):
-        full_path = os.path.join(self._cache_dir, file_name)
-        tmp_dir = self.get_transaction_dir()
-        return Cache.TransactionFile(full_path, tmp_dir)
-
-    @staticmethod
-    def commit(resource):
-        resource.close()
-
-    def get(self, file_name):
-        full_path = os.path.join(self._cache_dir, file_name)
-        if os.path.exists(full_path):
-            try:
-                # if the file has been removed by now the open method
-                # throws an exception
-                return open(full_path, 'rb')
-            except IOError, e:
-                raise FileNotFoundInRepository(full_path)
-        return None
-
-
-class Fetcher(object):
-    """ Abstract wrapper around a Fetcher """
-
-    __metadata__ = abc.ABCMeta
-
-    def __init__(self, source, cache_dir=''):
-        self.__cache = Cache(cache_dir)
-        self.source = source
-
-    def _make_file_uri(self, file_name):
-        return os.path.join(self.source, file_name)
-
-    def get_cache_path(self):
-        return self.__cache.get_cache_path()
-
-    def retrieve_file(self, file_name):
-        """
-        Method to retrieve a file from the cache if exists, or from
-        the repository if it doesn't. In case it has to be retrieved from
-        the repository it will also be decompressed before being stored in
-        the cache
-        :param file_name: name of the file in the repository
-        :return: a file read-only file object that represents the cached file
-        """
-        return self._retrieve(file_name, self._retrieve_file)
-
-    def retrieve_raw_file(self, file_name):
-        """
-        Method to retrieve a file from the cache if exists, or from
-        the repository if it doesn't. In case it has to be retrieved from
-        the repository it won't be decompressed
-        :param file_name: name of the file in the repository
-        :return: a file read-only file object that represents the cached file
-        """
-        return self._retrieve(file_name, self._retrieve_raw_file)
-
-    def _retrieve(self, file_name, retrieve_fn):
-        cached_file_ro = self.__cache.get(file_name)
-        if not cached_file_ro:
-            cached_file_rw = self.__cache.transaction(file_name)
-            retrieve_fn(file_name, cached_file_rw)
-            self.__cache.commit(cached_file_rw)
-        return self.__cache.get(file_name)
-
-    @abc.abstractmethod
-    def _retrieve_file(self, file_name, cached_file):
-        """ Abstract method to retrieve a file from the repository """
-        pass
-
-    @abc.abstractmethod
-    def _retrieve_raw_file(self, file_name, cached_file):
-        """ Abstract method to retrieve a raw file from the repository """
-        pass
-
-
-class LocalFetcher(Fetcher):
-    """ Retrieves files only from the local cache """
-
-    def __init__(self, local_repo, cache_dir=''):
-        super(LocalFetcher, self).__init__(local_repo, cache_dir)
-
-    def _retrieve_file(self, file_name, cached_file):
-        full_path = self._make_file_uri(file_name)
-        if os.path.exists(full_path):
-            compressed_file = open(full_path, 'r')
-            decompressed_content = zlib.decompress(compressed_file.read())
-            compressed_file.close()
-            cached_file.write(decompressed_content)
-        else:
-            raise FileNotFoundInRepository(file_name)
-
-    def _retrieve_raw_file(self, file_name, cached_file):
-        """ Retrieves the file directly from the source """
-        full_path = self._make_file_uri(file_name)
-        if os.path.exists(full_path):
-            raw_file = open(full_path, 'rb')
-            cached_file.write(raw_file.read())
-            raw_file.close()
-        else:
-            raise FileNotFoundInRepository(file_name)
-
-
-class RemoteFetcher(Fetcher):
-    """ Retrieves files from the local cache if found, and from
-    remote otherwise
-    """
-
-    def __init__(self, repo_url, cache_dir=''):
-        super(RemoteFetcher, self).__init__(repo_url, cache_dir)
-        self._user_agent      = cvmfs.__package_name__ + "/" + cvmfs.__version__
-        self._default_headers = { 'User-Agent': self._user_agent }
-
-    def _download_content_and_store(self, cached_file, file_url):
-        response = requests.get(file_url, stream=True,
-                                          headers=self._default_headers)
-        if response.status_code != requests.codes.ok:
-            raise FileNotFoundInRepository(file_url)
-        for chunk in response.iter_content(chunk_size=4096):
-            if chunk:
-                cached_file.write(chunk)
-
-    def _download_content_and_decompress(self, cached_file, file_url):
-        response = requests.get(file_url, stream=False,
-                                          headers=self._default_headers)
-        if response.status_code != requests.codes.ok:
-            raise FileNotFoundInRepository(file_url)
-        decompressed_content = zlib.decompress(response.content)
-        cached_file.write(decompressed_content)
-
-    def _retrieve_file(self, file_name, cached_file):
-        file_url = self._make_file_uri(file_name)
-        self._download_content_and_decompress(cached_file, file_url)
-
-    def _retrieve_raw_file(self, file_name, cached_file):
-        file_url = self._make_file_uri(file_name)
-        self._download_content_and_store(cached_file, file_url)
-
-
 class Repository(object):
     """ Wrapper around a CVMFS Repository representation """
 
-    def __init__(self, source, cache_dir=''):
+    def __init__(self, source, cache_dir = None):
         if source == '':
             raise Exception('source cannot be empty')
         self._fetcher = self.__init_fetcher(source, cache_dir)
-        self._storage_location = self._fetcher.get_cache_path()
+        self._endpoint = source
         self._opened_catalogs = {}
         self._read_manifest()
         self._try_to_get_last_replication_timestamp()
@@ -431,7 +172,7 @@ class Repository(object):
                 self.manifest = Manifest(manifest_file)
             self.fqrn = self.manifest.repository_name
         except FileNotFoundInRepository, e:
-            raise RepositoryNotFound(self._storage_location)
+            raise RepositoryNotFound(self._endpoint)
 
 
     @staticmethod
@@ -562,9 +303,11 @@ def all_local():
 def all_local_stratum0():
     return [ repo for repo in all_local() if repo.type == 'stratum0' ]
 
-def open_repository(repository_path, public_key = None):
+def open_repository(repository_path, **kwargs):
     """ wrapper function accessing a repository by URL, local FQRN or path """
-    repo = Repository(repository_path)
+    cache_dir  = kwargs['cache_dir']  if 'cache_dir'  in kwargs else None
+    public_key = kwargs['public_key'] if 'public_key' in kwargs else None
+    repo = Repository(repository_path, cache_dir)
     if public_key:
         repo.verify(public_key)
     return repo

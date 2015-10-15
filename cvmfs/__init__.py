@@ -11,6 +11,8 @@ from whitelist    import *
 from certificate  import *
 from repository   import *
 from availability import *
+from cache        import *
+from fetcher      import *
 from _common      import _split_md5
 from _common      import _combine_md5
 

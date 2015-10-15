@@ -24,13 +24,7 @@ binary string containing the private-key signature terminated by EOF.
 import abc
 import hashlib
 
-class IncompleteRootFileSignature(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
-
-class InvalidRootFileSignature(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
+from _exceptions import *
 
 
 class RootFile:
