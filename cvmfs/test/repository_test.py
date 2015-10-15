@@ -95,3 +95,10 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.assertRaises(cvmfs.RepositoryVerificationFailed,
                           cvmfs.open_repository,
                           self.mock_repo.dir, self.mock_repo.public_key)
+
+
+    def test_lookup(self):
+        repo = cvmfs.open_repository(self.mock_repo.dir)
+        dirent = repo.lookup('/.cvmfsdirtab')
+        self.assertIsNotNone(dirent)
+

@@ -293,6 +293,71 @@ class Repository(object):
         self._opened_catalogs[catalog_hash] = new_catalog
         return new_catalog
 
+    def _lookup_path(self, path):
+        """
+        Lookups in the already opened catalogs for this path's best fit
+        :param path: path to search for
+        :return: the DirectoryEntry that corresponds to the given path if
+        it is found in the already loaded catalogs, or None otherwise
+        """
+        if path == '/':
+            path = ''
+        best_fit = self._opened_catalogs_for_path(path)
+        result = best_fit.find_directory_entry(path)
+        while result is None:
+            best_nested = best_fit.find_best_child_for_path(path)
+            if best_nested is None:
+                break
+            best_fit = best_nested.retrieve_from(self)
+            result = best_fit.find_directory_entry(path)
+        return result
+
+    def lookup(self, path, follow_symlink=True):
+        """
+        Lookups up in the repository for a given path
+        :param path: path to search for
+        :param follow_symlink: in case the given path represents a symlink
+        follow it and return its final representation
+        :return: the DirectoryEntry that corresponds to the given path
+        """
+        result = None
+        index = -1
+        if not path or path == "":
+            path = "/"
+        while index < len(path):
+            index = path.find('/', index + 1)
+            if index < 0:
+                index = len(path)
+                current_path = path
+            else:
+                current_path = path[:index]
+            result = self._lookup_path(current_path)
+            if result is None:
+                return None
+            if result.is_symlink():
+                next_index = path.find('/', index + 1)
+                if next_index != -1 or follow_symlink:
+                    next_index = len(path) if next_index == -1 else next_index
+                    path = path[:index + 1] + result.symlink + path[next_index:]
+        return result
+
+    def _opened_catalogs_for_path(self, path):
+        """
+        Gets the closest already opened catalog for a given path
+        :param path: the path to search for
+        :return: the closest opened catalog for a given path
+        """
+        best_catalog = self.retrieve_root_catalog()
+        max_length = 0
+        for catalog in self._opened_catalogs.values():
+            try:
+                curr_length = path.index(catalog.root_prefix)
+            except ValueError:
+                curr_length = -1
+            if curr_length > max_length:
+                best_catalog = catalog
+        return best_catalog
+
 
 def all_local():
     d = _common._REPO_CONFIG_PATH

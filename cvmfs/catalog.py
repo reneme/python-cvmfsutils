@@ -324,6 +324,20 @@ class Catalog(DatabaseObject):
         if not hasattr(self, 'last_modified'):
             self.last_modified = datetime.datetime.min
 
+    def find_best_child_for_path(self, path):
+        """
+        Finds the best fit for a given path between a catalog's children
+        :param path: path to find
+        :return: the closest catalog-child to a given path
+        """
+        curr_length = 0
+        best_fit = None
+        for cr in self.list_nested():
+            if cr.root_path.contains(path) and len(cr.root_path) > curr_length:
+                best_fit = cr
+                curr_length = len(cr.root_path)
+        return best_fit
+
 
     @staticmethod
     def _canonicalize_path(path):
