@@ -357,6 +357,28 @@ class Repository(object):
                 max_length = len(best_catalog.root_prefix)
         return best_catalog
 
+    def list_directory(self, path):
+        """
+        List all the entries in a directory
+        :param path: path of the directory
+        :return: a list of DirectoryEntry representing all the entries for the
+        given directory, or None if such a directory does not exist
+        """
+        dirent = self.lookup(path)
+        if dirent is not None and dirent.is_directory():
+            if not dirent.is_nested_catalog_mountpoint():
+                best_fit = self._opened_catalogs_for_path(path)
+            else:
+                best_fit = self.retrieve_catalog_for_path(path)
+            result = best_fit.list_directory(path)
+            while result is None:
+                best_nested = result.find_best_child_for_path(path)
+                if best_nested is None:
+                    break
+                best_fit = best_nested.retrieve_from(self)
+                result = best_fit.list_directory(path)
+            return result
+
 
 def all_local():
     d = _common._REPO_CONFIG_PATH

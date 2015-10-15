@@ -98,6 +98,8 @@ class TestRepositoryWrapper(unittest.TestCase):
 
 
     def test_lookup(self):
+        self.mock_repo.make_valid_whitelist()
+        self.mock_repo.serve_via_http()
         repo = cvmfs.open_repository(self.mock_repo.url,
                                      public_key=self.mock_repo.public_key)
         dirent = repo.lookup('/.cvmfsdirtab')
@@ -106,4 +108,21 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.assertIsNotNone(dirent)
         dirent = repo.lookup('/bar/4/foobar')
         self.assertIsNone(dirent)
+
+
+    def test_list(self):
+        self.mock_repo.make_valid_whitelist()
+        self.mock_repo.serve_via_http()
+        repo = cvmfs.open_repository(self.mock_repo.url,
+                                     public_key=self.mock_repo.public_key)
+        dirents = repo.list_directory('/')
+        self.assertIsNotNone(dirents)
+        self.assertEqual(3, len(dirents))
+        dirents = repo.list_directory('/bar/3')
+        self.assertIsNotNone(dirents)
+        self.assertEqual(4, len(dirents))
+        dirents = repo.list_directory('/bar/4/foo')
+        self.assertIsNone(dirents)
+        dirents = repo.list_directory('/fakedir')
+        self.assertIsNone(dirents)
 

@@ -221,6 +221,8 @@ class Catalog(DatabaseObject):
     def list_directory(self, path):
         """ Create a directory listing of the given directory path """
         real_path = self._canonicalize_path(path)
+        if real_path == '/':
+            real_path = ''
         parent_1, parent_2 = _split_md5(hashlib.md5(real_path).digest())
         return self.list_directory_split_md5(parent_1, parent_2)
 
