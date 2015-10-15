@@ -350,12 +350,11 @@ class Repository(object):
         best_catalog = self.retrieve_root_catalog()
         max_length = 0
         for catalog in self._opened_catalogs.values():
-            try:
-                curr_length = path.index(catalog.root_prefix)
-            except ValueError:
-                curr_length = -1
+            curr_length = len(catalog.root_prefix) \
+                if path.find(catalog.root_prefix) == 0 else 0
             if curr_length > max_length:
                 best_catalog = catalog
+                max_length = len(best_catalog.root_prefix)
         return best_catalog
 
 

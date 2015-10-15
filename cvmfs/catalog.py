@@ -330,12 +330,13 @@ class Catalog(DatabaseObject):
         :param path: path to find
         :return: the closest catalog-child to a given path
         """
-        curr_length = 0
+        max_length = 0
         best_fit = None
         for cr in self.list_nested():
-            if cr.root_path.contains(path) and len(cr.root_path) > curr_length:
+            curr_length = path.find(cr.root_path)
+            if curr_length == 0 and len(cr.root_path) > max_length:
                 best_fit = cr
-                curr_length = len(cr.root_path)
+                max_length = len(cr.root_path)
         return best_fit
 
 

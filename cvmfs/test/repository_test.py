@@ -101,4 +101,8 @@ class TestRepositoryWrapper(unittest.TestCase):
         repo = cvmfs.open_repository(self.mock_repo.dir)
         dirent = repo.lookup('/.cvmfsdirtab')
         self.assertIsNotNone(dirent)
+        dirent = repo.lookup('/bar/4/foo')
+        self.assertIsNotNone(dirent)
+        dirent = repo.lookup('/bar/4/foobar')
+        self.assertIsNone(dirent)
 
