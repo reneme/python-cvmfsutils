@@ -197,8 +197,36 @@ class CatalogTreeIterator(object):
         return wrapper.get_catalog()
 
 
-
 class Cache(object):
+    """ Abstract base class for a caching strategy """
+
+    """ Try to get an object from the cache
+        :file_name  name of the object to be retrieved
+        :return     a file object of the cached object or None if not found
+    """
+    @abc.abstractmethod
+    def get(self, file_name):
+        pass
+
+    """ Open a transaction to accomodate a new object in the cache
+        :file_name  name of the object to be stored in the cache
+        :return     a writable file object to a temporary storage location
+    """
+    @abc.abstractmethod
+    def transaction(self, file_name):
+        pass
+
+    """ Commit a filled file object obtained via transaction() into the cache
+        :resource   a file object obtained by transaction() and filled with data
+        :return     a file object to the committed object
+    """
+    @abc.abstractmethod
+    def commit(self, resource):
+        pass
+
+
+class DiskCache(Cache):
+    """ Maintains a fully functional and reusable disk cache """
 
     class TransactionFile(file):
         """ Wrapper around a writable file. The actual file will be renamed
@@ -207,15 +235,15 @@ class Cache(object):
 
         def __init__(self, name, tmp_dir):
             self.__final_destination_path = name
-            temp_file_path = tempfile.mktemp(dir=tmp_dir, prefix='tmp.')
-            super(Cache.TransactionFile, self).__init__(temp_file_path, 'w+')
+            temp_path = tempfile.mktemp(dir=tmp_dir, prefix='tmp.')
+            super(DiskCache.TransactionFile, self).__init__(temp_path, 'w+b')
 
         def __del__(self):
             if not self.closed:
                 self.close()
 
-        def close(self):
-            super(Cache.TransactionFile, self).close()
+        def commit(self):
+            super(DiskCache.TransactionFile, self).close()
             os.rename(self.name, self.__final_destination_path)
 
     def __init__(self, cache_dir):
@@ -259,10 +287,9 @@ class Cache(object):
     def transaction(self, file_name):
         full_path = os.path.join(self._cache_dir, file_name)
         tmp_dir = self.get_transaction_dir()
-        return Cache.TransactionFile(full_path, tmp_dir)
+        return DiskCache.TransactionFile(full_path, tmp_dir)
 
-    @staticmethod
-    def commit(resource):
+    def commit(self, resource):
         resource.close()
 
     def get(self, file_name):
@@ -282,15 +309,16 @@ class Fetcher(object):
 
     __metadata__ = abc.ABCMeta
 
-    def __init__(self, source, cache_dir=''):
-        self.__cache = Cache(cache_dir)
+    def __init__(self, source, cache_dir = None):
+        self.__cache = DiskCache(cache_dir) if cache_dir else None
         self.source = source
 
     def _make_file_uri(self, file_name):
         return os.path.join(self.source, file_name)
 
     def get_cache_path(self):
-        return self.__cache.get_cache_path()
+        if self.__cache:
+            return self.__cache.get_cache_path()
 
     def retrieve_file(self, file_name):
         """
@@ -313,13 +341,22 @@ class Fetcher(object):
         """
         return self._retrieve(file_name, self._retrieve_raw_file)
 
-    def _retrieve(self, file_name, retrieve_fn):
+    def _cached_retrieve(self, file_name, retrieve_fn):
         cached_file_ro = self.__cache.get(file_name)
         if not cached_file_ro:
             cached_file_rw = self.__cache.transaction(file_name)
             retrieve_fn(file_name, cached_file_rw)
             self.__cache.commit(cached_file_rw)
         return self.__cache.get(file_name)
+
+    def _retrieve(self, file_name, retrieve_fn):
+        if self.__cache:
+            return self._cached_retrieve(file_name, retrieve_fn)
+        tmp_file = tempfile.NamedTemporaryFile("w+b")
+        retrieve_fn(file_name, tmp_file)
+        tmp_file.seek(0)
+        return tmp_file
+
 
     @abc.abstractmethod
     def _retrieve_file(self, file_name, cached_file):
@@ -335,7 +372,7 @@ class Fetcher(object):
 class LocalFetcher(Fetcher):
     """ Retrieves files only from the local cache """
 
-    def __init__(self, local_repo, cache_dir=''):
+    def __init__(self, local_repo, cache_dir = None):
         super(LocalFetcher, self).__init__(local_repo, cache_dir)
 
     def _retrieve_file(self, file_name, cached_file):
@@ -364,7 +401,7 @@ class RemoteFetcher(Fetcher):
     remote otherwise
     """
 
-    def __init__(self, repo_url, cache_dir=''):
+    def __init__(self, repo_url, cache_dir = None):
         super(RemoteFetcher, self).__init__(repo_url, cache_dir)
         self._user_agent      = cvmfs.__package_name__ + "/" + cvmfs.__version__
         self._default_headers = { 'User-Agent': self._user_agent }
@@ -398,11 +435,11 @@ class RemoteFetcher(Fetcher):
 class Repository(object):
     """ Wrapper around a CVMFS Repository representation """
 
-    def __init__(self, source, cache_dir=''):
+    def __init__(self, source, cache_dir = None):
         if source == '':
             raise Exception('source cannot be empty')
         self._fetcher = self.__init_fetcher(source, cache_dir)
-        self._storage_location = self._fetcher.get_cache_path()
+        self._endpoint = source
         self._opened_catalogs = {}
         self._read_manifest()
         self._try_to_get_last_replication_timestamp()
@@ -431,7 +468,7 @@ class Repository(object):
                 self.manifest = Manifest(manifest_file)
             self.fqrn = self.manifest.repository_name
         except FileNotFoundInRepository, e:
-            raise RepositoryNotFound(self._storage_location)
+            raise RepositoryNotFound(self._endpoint)
 
 
     @staticmethod
