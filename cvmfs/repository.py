@@ -607,9 +607,11 @@ def all_local():
 def all_local_stratum0():
     return [ repo for repo in all_local() if repo.type == 'stratum0' ]
 
-def open_repository(repository_path, public_key = None):
+def open_repository(repository_path, **kwargs):
     """ wrapper function accessing a repository by URL, local FQRN or path """
-    repo = Repository(repository_path)
+    cache_dir  = kwargs['cache_dir']  if 'cache_dir'  in kwargs.keys() else None
+    public_key = kwargs['public_key'] if 'public_key' in kwargs.keys() else None
+    repo = Repository(repository_path, cache_dir)
     if public_key:
         repo.verify(public_key)
     return repo
