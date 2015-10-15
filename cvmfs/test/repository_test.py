@@ -53,13 +53,13 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.mock_repo.make_valid_whitelist()
         self.mock_repo.serve_via_http()
         repo1 = cvmfs.open_repository(self.mock_repo.url,
-                                      self.mock_repo.public_key)
+                                      public_key=self.mock_repo.public_key)
         self.assertTrue(isinstance(repo1, cvmfs.Repository))
         self.assertTrue(repo1.verify(self.mock_repo.public_key))
         self.assertEqual(self.mock_repo.repo_name, repo1.manifest.repository_name)
 
         repo2 = cvmfs.open_repository(self.mock_repo.dir,
-                                      self.mock_repo.public_key)
+                                      public_key=self.mock_repo.public_key)
         self.assertTrue(isinstance(repo2, cvmfs.Repository))
         self.assertTrue(repo2.verify(self.mock_repo.public_key))
         self.assertEqual(self.mock_repo.repo_name, repo2.manifest.repository_name)
@@ -80,10 +80,10 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.mock_repo.serve_via_http()
         self.assertRaises(cvmfs.RepositoryVerificationFailed,
                           cvmfs.open_repository,
-                          self.mock_repo.url, self.public_key_file)
+                          self.mock_repo.url, public_key=self.public_key_file)
         self.assertRaises(cvmfs.RepositoryVerificationFailed,
                           cvmfs.open_repository,
-                          self.mock_repo.dir, self.public_key_file)
+                          self.mock_repo.dir, public_key=self.public_key_file)
 
 
     def test_expired_whitelist(self):
@@ -91,7 +91,7 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.mock_repo.serve_via_http()
         self.assertRaises(cvmfs.RepositoryVerificationFailed,
                           cvmfs.open_repository,
-                          self.mock_repo.url, self.mock_repo.public_key)
+                          self.mock_repo.url, public_key=self.mock_repo.public_key)
         self.assertRaises(cvmfs.RepositoryVerificationFailed,
                           cvmfs.open_repository,
-                          self.mock_repo.dir, self.mock_repo.public_key)
+                          self.mock_repo.dir, public_key=self.mock_repo.public_key)
