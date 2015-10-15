@@ -9,6 +9,7 @@ from datetime import datetime
 from dateutil.tz import tzutc
 
 from root_file import RootFile
+from _exceptions import *
 
 
 class Manifest(RootFile):
