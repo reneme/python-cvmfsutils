@@ -312,11 +312,10 @@ class Repository(object):
             result = best_fit.find_directory_entry(path)
         return result
 
-    def lookup(self, path, follow_symlink=True):
+    def lookup(self, path):
         """
         Lookups up in the repository for a given path
         :param path: path to search for
-        :param follow_symlink: in case the given path represents a symlink
         follow it and return its final representation
         :return: the DirectoryEntry that corresponds to the given path
         """
@@ -334,11 +333,6 @@ class Repository(object):
             result = self._lookup_path(current_path)
             if result is None:
                 return None
-            if result.is_symlink():
-                next_index = path.find('/', index + 1)
-                if next_index != -1 or follow_symlink:
-                    next_index = len(path) if next_index == -1 else next_index
-                    path = path[:index + 1] + result.symlink + path[next_index:]
         return result
 
     def _opened_catalogs_for_path(self, path):
