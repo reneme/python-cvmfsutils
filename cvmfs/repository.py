@@ -157,7 +157,7 @@ class Repository(object):
         if os.path.exists(source):
             return LocalFetcher(source, cache_dir)
         if os.path.exists(os.path.join('/srv/cvmfs', source)):
-            return LocalFetcher(os.path.join('/srv/cvmfs', source, cache_dir))
+            return LocalFetcher(os.path.join('/srv/cvmfs', source), cache_dir)
         else:
             raise RepositoryNotFound(source)
 
