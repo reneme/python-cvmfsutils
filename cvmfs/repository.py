@@ -293,6 +293,62 @@ class Repository(object):
         self._opened_catalogs[catalog_hash] = new_catalog
         return new_catalog
 
+    def _lookup_path(self, path):
+        """
+        Lookups in all existing catalogs for this path's best fit
+        :param path: path to search for
+        :return: the DirectoryEntry that corresponds to the given path if
+        it is found in the already loaded catalogs, or None otherwise
+        """
+        if path == '/':
+            path = ''
+        best_fit = self._opened_catalogs_for_path(path)
+        result = best_fit.find_directory_entry(path)
+        while result is None:
+            best_nested = best_fit.find_best_child_for_path(path)
+            if best_nested is None:
+                break
+            best_fit = best_nested.retrieve_from(self)
+            result = best_fit.find_directory_entry(path)
+        return result
+
+    def lookup(self, path):
+        """
+        Lookups up in the repository for a given path
+        :param path: path to search for
+        follow it and return its final representation
+        :return: the DirectoryEntry that corresponds to the given path
+        """
+        return self._lookup_path(path)
+
+    def _opened_catalogs_for_path(self, path):
+        """
+        Gets the closest already opened catalog for a given path
+        :param path: the path to search for
+        :return: the closest opened catalog for a given path
+        """
+        best_catalog = self.retrieve_root_catalog()
+        max_length = 0
+        for catalog in self._opened_catalogs.values():
+            curr_length = len(catalog.root_prefix) \
+                if path.find(catalog.root_prefix) == 0 else 0
+            if curr_length > max_length:
+                best_catalog = catalog
+                max_length = len(best_catalog.root_prefix)
+        return best_catalog
+
+    def list_directory(self, path):
+        """
+        List all the entries in a directory
+        :param path: path of the directory
+        :return: a list of DirectoryEntry representing all the entries for the
+        given directory, or None if such a directory does not exist
+        """
+        dirent = self.lookup(path)
+        if dirent and dirent.is_directory():
+            best_fit = self.retrieve_catalog_for_path(path)
+            return best_fit.list_directory(path)
+
 
 def all_local():
     d = _common._REPO_CONFIG_PATH

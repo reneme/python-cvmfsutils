@@ -221,6 +221,8 @@ class Catalog(DatabaseObject):
     def list_directory(self, path):
         """ Create a directory listing of the given directory path """
         real_path = self._canonicalize_path(path)
+        if real_path == '/':
+            real_path = ''
         parent_1, parent_2 = _split_md5(hashlib.md5(real_path).digest())
         return self.list_directory_split_md5(parent_1, parent_2)
 
@@ -323,6 +325,21 @@ class Catalog(DatabaseObject):
         """ Catalog w/o a last_modified field, we set it to 0 """
         if not hasattr(self, 'last_modified'):
             self.last_modified = datetime.datetime.min
+
+    def find_best_child_for_path(self, path):
+        """
+        Finds the best fit for a given path between a catalog's children
+        :param path: path to find
+        :return: the closest catalog-child to a given path
+        """
+        max_length = 0
+        best_fit = None
+        for cr in self.list_nested():
+            curr_length = path.find(cr.root_path)
+            if curr_length == 0 and len(cr.root_path) > max_length:
+                best_fit = cr
+                max_length = len(cr.root_path)
+        return best_fit
 
 
     @staticmethod
