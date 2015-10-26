@@ -71,6 +71,8 @@ class DirectoryEntry:
         self.md5path_1, self.md5path_2, self.parent_1, self.parent_2,    \
         self.content_hash, self.flags, self.size, self.mode, self.mtime, \
         self.name, self.symlink = result_set
+        if self.content_hash:
+            self.content_hash = _binary_buffer_to_hex_string(self.content_hash)
         self.chunks = []
         self._read_content_hash_type()
 

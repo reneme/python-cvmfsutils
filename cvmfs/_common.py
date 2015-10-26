@@ -41,7 +41,7 @@ class DatabaseObject:
 
     def _open_database(self):
         """ Create and configure a database handle to the Catalog """
-        self._db_handle = sqlite3.connect(self._file.name)
+        self._db_handle = sqlite3.connect(self._file.name, check_same_thread=False)
         self._db_handle.text_factory = str
 
     def db_size(self):
