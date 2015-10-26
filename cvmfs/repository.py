@@ -295,7 +295,7 @@ class Repository(object):
 
     def _lookup_path(self, path):
         """
-        Lookups in the already opened catalogs for this path's best fit
+        Lookups in all existing catalogs for this path's best fit
         :param path: path to search for
         :return: the DirectoryEntry that corresponds to the given path if
         it is found in the already loaded catalogs, or None otherwise
@@ -319,21 +319,7 @@ class Repository(object):
         follow it and return its final representation
         :return: the DirectoryEntry that corresponds to the given path
         """
-        result = None
-        index = -1
-        if not path or path == "":
-            path = "/"
-        while index < len(path):
-            index = path.find('/', index + 1)
-            if index < 0:
-                index = len(path)
-                current_path = path
-            else:
-                current_path = path[:index]
-            result = self._lookup_path(current_path)
-            if result is None:
-                return None
-        return result
+        return self._lookup_path(path)
 
     def _opened_catalogs_for_path(self, path):
         """
@@ -359,19 +345,9 @@ class Repository(object):
         given directory, or None if such a directory does not exist
         """
         dirent = self.lookup(path)
-        if dirent is not None and dirent.is_directory():
-            if not dirent.is_nested_catalog_mountpoint():
-                best_fit = self._opened_catalogs_for_path(path)
-            else:
-                best_fit = self.retrieve_catalog_for_path(path)
-            result = best_fit.list_directory(path)
-            while result is None:
-                best_nested = result.find_best_child_for_path(path)
-                if best_nested is None:
-                    break
-                best_fit = best_nested.retrieve_from(self)
-                result = best_fit.list_directory(path)
-            return result
+        if dirent and dirent.is_directory():
+            best_fit = self.retrieve_catalog_for_path(path)
+            return best_fit.list_directory(path)
 
 
 def all_local():

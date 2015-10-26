@@ -108,6 +108,12 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.assertIsNotNone(dirent)
         dirent = repo.lookup('/bar/4/foobar')
         self.assertIsNone(dirent)
+        # with trailing slash this time
+        dirent1 = repo.lookup('/bar/4/foo/')
+        self.assertIsNotNone(dirent1)
+        dirent2 = repo.lookup('/bar/4/../4/foo/')
+        self.assertIsNotNone(dirent2)
+        self.assertEquals(dirent1.name, dirent2.name)
 
 
     def test_list(self):
@@ -121,8 +127,16 @@ class TestRepositoryWrapper(unittest.TestCase):
         dirents = repo.list_directory('/bar/3')
         self.assertIsNotNone(dirents)
         self.assertEqual(4, len(dirents))
+        self.assertEquals('.cvmfscatalog', dirents[0].name)
+        self.assertEquals('1', dirents[1].name)
+        self.assertEquals('2', dirents[2].name)
+        self.assertEquals('3', dirents[3].name)
         dirents = repo.list_directory('/bar/4/foo')
         self.assertIsNone(dirents)
         dirents = repo.list_directory('/fakedir')
         self.assertIsNone(dirents)
+        # with trailing slash this time
+        dirents = repo.list_directory('/bar/3/')
+        self.assertIsNotNone(dirents)
+        self.assertEqual(4, len(dirents))
 
