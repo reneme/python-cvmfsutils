@@ -12,9 +12,19 @@ from _common import DatabaseObject
 class RevisionTag:
     """ Specific revisions in CernVM-FS 2.1.x repositories have named tags  """
     @staticmethod
-    def sql_query():
-        return '''SELECT name, hash, revision, timestamp, channel, description
-                  FROM tags ORDER BY timestamp DESC'''
+    def sql_query_all():
+        return 'SELECT name, hash, revision, timestamp, channel, description \
+                  FROM tags ORDER BY timestamp DESC'
+
+    @staticmethod
+    def sql_query_name(name):
+        return 'SELECT name, hash, revision, timestamp, channel, description \
+                  FROM tags WHERE name=' + name + ' LIMIT 1'
+
+    @staticmethod
+    def sql_query_revision(revision):
+        return 'SELECT name, hash, revision, timestamp, channel, description \
+                  FROM tags WHERE revision=' + revision + ' LIMIT 1'
 
     def __init__(self, sql_result):
         self.name        = sql_result[0]
@@ -54,8 +64,16 @@ class History(DatabaseObject):
         return self.list_tags().__iter__()
 
     def list_tags(self):
-        results = self.run_sql(RevisionTag.sql_query())
+        results = self.run_sql(RevisionTag.sql_query_all())
         return [ RevisionTag(sql_res) for sql_res in results ]
+
+    def get_tag_by_name(self, tag_name):
+        result = self.run_sql(RevisionTag.sql_query_name(tag_name))
+        return RevisionTag(result)
+
+    def get_tag_by_revision(self, revision):
+        result = self.run_sql(RevisionTag.sql_query_revision(revision))
+        return RevisionTag(result)
 
     def _read_properties(self):
         self.read_properties_table(lambda prop_key, prop_value:
