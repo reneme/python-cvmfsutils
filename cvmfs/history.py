@@ -69,11 +69,13 @@ class History(DatabaseObject):
 
     def get_tag_by_name(self, tag_name):
         result = self.run_sql(RevisionTag.sql_query_name(tag_name))
-        return RevisionTag(result)
+        if result:
+            return RevisionTag(result[0])
 
     def get_tag_by_revision(self, revision):
         result = self.run_sql(RevisionTag.sql_query_revision(revision))
-        return RevisionTag(result)
+        if result:
+            return RevisionTag(result[0])
 
     def _read_properties(self):
         self.read_properties_table(lambda prop_key, prop_value:
