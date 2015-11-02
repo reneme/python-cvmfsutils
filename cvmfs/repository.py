@@ -172,7 +172,7 @@ class Repository(object):
                 self.manifest = Manifest(manifest_file)
             self.fqrn = self.manifest.repository_name
         except FileNotFoundInRepository, e:
-            raise RepositoryNotFound(self._endpoint)
+            raise RepositoryNotFound(self._fetcher.source)
 
 
     @staticmethod
