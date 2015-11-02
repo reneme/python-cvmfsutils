@@ -139,18 +139,26 @@ class CatalogTreeIterator(object):
 class Repository(object):
     """ Wrapper around a CVMFS Repository representation """
 
-    def __init__(self, source, cache_dir = None):
-        if source == '':
-            raise Exception('source cannot be empty')
-        self._fetcher = self.__init_fetcher(source, cache_dir)
+    def __init__(self, fetcher):
+        self._fetcher = fetcher
         self._opened_catalogs = {}
         self._read_manifest()
         self._try_to_get_last_replication_timestamp()
         self._try_to_get_replication_state()
 
+    @classmethod
+    def from_source(cls, source, cache_dir = None):
+        if source == '':
+            raise Exception('source cannot be empty')
+        return cls(Repository.__make_fetcher(source, cache_dir))
 
-    @staticmethod
-    def __init_fetcher(source, cache_dir):
+    @classmethod
+    def with_custom_fetcher(cls, fetcher):
+        return cls(fetcher)
+
+
+    @classmethod
+    def __make_fetcher(cls, source, cache_dir):
         if source.startswith("http://"):
             return RemoteFetcher(source, cache_dir)
         if os.path.exists(source):
@@ -353,7 +361,7 @@ def all_local():
     d = _common._REPO_CONFIG_PATH
     if not os.path.isdir(d):
         raise _common.CvmfsNotInstalled
-    return [ Repository(repo) for repo in os.listdir(d) if os.path.isdir(os.path.join(d, repo)) ]
+    return [ Repository.from_source(repo) for repo in os.listdir(d) if os.path.isdir(os.path.join(d, repo)) ]
 
 def all_local_stratum0():
     return [ repo for repo in all_local() if repo.type == 'stratum0' ]
@@ -362,7 +370,7 @@ def open_repository(repository_path, **kwargs):
     """ wrapper function accessing a repository by URL, local FQRN or path """
     cache_dir  = kwargs['cache_dir']  if 'cache_dir'  in kwargs else None
     public_key = kwargs['public_key'] if 'public_key' in kwargs else None
-    repo = Repository(repository_path, cache_dir)
+    repo = Repository.from_source(repository_path, cache_dir)
     if public_key:
         repo.verify(public_key)
     return repo
