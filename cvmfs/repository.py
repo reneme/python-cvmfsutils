@@ -143,7 +143,6 @@ class Repository(object):
         if source == '':
             raise Exception('source cannot be empty')
         self._fetcher = self.__init_fetcher(source, cache_dir)
-        self._endpoint = source
         self._opened_catalogs = {}
         self._read_manifest()
         self._try_to_get_last_replication_timestamp()
