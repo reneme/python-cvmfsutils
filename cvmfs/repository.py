@@ -149,7 +149,7 @@ class Repository(object):
 
     @classmethod
     def from_source(cls, source, cache_dir = None):
-        if source == '':
+        if not source:
             raise Exception('source cannot be empty')
         return cls(Repository.__make_fetcher(source, cache_dir))
 
