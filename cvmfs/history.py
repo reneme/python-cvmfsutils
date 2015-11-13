@@ -24,7 +24,13 @@ class RevisionTag:
     @staticmethod
     def sql_query_revision(revision):
         return 'SELECT name, hash, revision, timestamp, channel, description \
-                  FROM tags WHERE revision=' + revision + ' LIMIT 1'
+                  FROM tags WHERE revision=' + str(revision) + ' LIMIT 1'
+
+    @staticmethod
+    def sql_query_date(timestamp):
+        return 'SELECT name, hash, revision, timestamp, channel, description \
+                  FROM tags WHERE timestamp >' + str(timestamp) + \
+               ' ORDER BY timestamp ASC LIMIT 1'
 
     def __init__(self, sql_result):
         self.name        = sql_result[0]
@@ -74,6 +80,11 @@ class History(DatabaseObject):
 
     def get_tag_by_revision(self, revision):
         result = self.run_sql(RevisionTag.sql_query_revision(revision))
+        if result:
+            return RevisionTag(result[0])
+
+    def get_tag_by_date(self, timestamp):
+        result = self.run_sql(RevisionTag.sql_query_date(timestamp))
         if result:
             return RevisionTag(result[0])
 
