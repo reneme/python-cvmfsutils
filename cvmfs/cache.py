@@ -16,7 +16,7 @@ from _exceptions import *
 class CacheNotFoundException(Exception):
     def __init__(self, path):
         super(Exception, self).__init__("Couldn't initialize the cache in \' "
-                                        + str(path) + "\' does not exist")
+                                        + str(path) + "\'. The directory does not exist")
 
 class Cache(object):
     """ Abstract base class for a caching strategy """
