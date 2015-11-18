@@ -145,10 +145,11 @@ class Repository(object):
         self._read_manifest()
         self._try_to_get_last_replication_timestamp()
         self._try_to_get_replication_state()
+        self._root_catalog_hash = self.manifest.root_catalog
 
     @classmethod
     def from_source(cls, source, cache_dir = None):
-        if source == '':
+        if not source:
             raise Exception('source cannot be empty')
         return cls(Repository.__make_fetcher(source, cache_dir))
 
@@ -245,6 +246,15 @@ class Repository(object):
         history_db = self.retrieve_object(self.manifest.history_database, 'H')
         return History(history_db)
 
+    def switch_revision(self, revision):
+        history = self.retrieve_history()
+        revision_tag = history.get_tag_by_revision(revision)
+        self._root_catalog_hash = revision_tag.hash
+
+    def switch_tag(self, tag_name):
+        history = self.retrieve_history()
+        revision_tag = history.get_tag_by_name(tag_name)
+        self._root_catalog_hash = revision_tag.hash
 
     def retrieve_whitelist(self):
         """ retrieve and parse the .cvmfswhitelist file from the repository """
@@ -265,7 +275,7 @@ class Repository(object):
 
 
     def retrieve_root_catalog(self):
-        return self.retrieve_catalog(self.manifest.root_catalog)
+        return self.retrieve_catalog(self._root_catalog_hash)
 
 
     def retrieve_catalog_for_path(self, needle_path):

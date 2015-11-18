@@ -36,6 +36,17 @@ class ContentHashTypes:
         else:
             return ""
 
+    @staticmethod
+    def to_string(hash_type):
+        if hash_type == -1:
+            return 'Unknown'
+        elif hash_type == 1:
+            return 'Sha1'
+        elif hash_type == 2:
+            return 'Ripemd160'
+        elif hash_type == 3:
+            return 'UpperBound'
+
 
 class Chunk:
     """ Wrapper around file chunks in the CVMFS catalogs """

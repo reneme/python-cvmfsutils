@@ -13,6 +13,11 @@ import cvmfs
 import _common
 from _exceptions import *
 
+class CacheNotFoundException(Exception):
+    def __init__(self, path):
+        super(Exception, self).__init__("Couldn't initialize the cache in \' "
+                                        + str(path) + "\'. The directory does not exist")
+
 class Cache(object):
     """ Abstract base class for a caching strategy """
 
@@ -78,8 +83,8 @@ class DiskCache(Cache):
             return open(self.__final_destination_path, "rb")
 
     def __init__(self, cache_dir):
-        if not os.path.exists(cache_dir):
-            cache_dir = tempfile.mkdtemp(dir='/tmp', prefix='cache.')
+        if cache_dir and not os.path.exists(cache_dir):
+            raise CacheNotFoundException(cache_dir)
         self._cache_dir = cache_dir
         self._create_cache_structure()
         self._cleanup_metadata()
