@@ -47,7 +47,7 @@ class RevisionIterator(object):
 
     def _fetch_and_push_catalog(self, catalog_mountpoint):
         current_catalog = self._get_current_catalog().catalog
-        nested_ref      = current_catalog.find_nested_for_path(catalog_mountpoint)
+        nested_ref = current_catalog.find_nested_for_path(catalog_mountpoint)
         if not nested_ref:
             raise NestedCatalogNotFound(self.revision.repository)
         new_catalog     = nested_ref.retrieve_from(self.revision.repository)
@@ -115,14 +115,20 @@ class CatalogTreeIterator(object):
 
 
 class Revision:
-    """ Wrapper around a CVMFS Repository revision"""
+    """ Wrapper around a CVMFS Repository revision.
+    A Revision is a concrete instantiation in time of the Repository. It
+    represents the concrete status of the repository in a certain period of
+    time. Revision data is contained in the so-called Tags, which are stored in
+    the History database.
+    """
 
     def __init__(self, repository, tag):
         self.repository = repository
         self._tag = tag
 
     def __str__(self):
-        return '<Revision ' + self.revision_number + ' - ' + self.hash + '>'
+        return '<Revision ' + self.revision_number \
+               + ' - ' + self.root_hash + '>'
 
     @property
     def revision_number(self):
@@ -137,19 +143,17 @@ class Revision:
         return self._tag.timestamp
 
     @property
-    def hash(self):
+    def root_hash(self):
         return self._tag.hash
 
     def retrieve_catalog(self, catalog_hash):
-        """ Download and open a catalog from the repository """
-        if catalog_hash in self.repository.opened_catalogs:
-            return self.repository.opened_catalogs[catalog_hash]
-        return self.repository.retrieve_and_open_catalog(catalog_hash)
+        """ Download and open a catalog that belongs to this revision """
+        return self.repository.retrieve_catalog(catalog_hash)
 
     def retrieve_root_catalog(self):
-        return self.retrieve_catalog(self.hash)
+        return self.retrieve_catalog(self.root_hash)
 
-    def catalogs(self, root_catalog=None):
+    def catalogs(self):
         return CatalogTreeIterator(self)
 
     def retrieve_catalog_for_path(self, needle_path):

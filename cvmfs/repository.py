@@ -148,6 +148,12 @@ class Repository(object):
         certificate = self.retrieve_object(self.manifest.certificate, 'X')
         return Certificate(certificate)
 
+    def retrieve_catalog(self, catalog_hash):
+        """ Download and open a catalog from the repository """
+        if catalog_hash in self.opened_catalogs:
+            return self.opened_catalogs[catalog_hash]
+        return self._retrieve_and_open_catalog(catalog_hash)
+
     def retrieve_object(self, object_hash, hash_suffix = ''):
         """ Retrieves an object from the content addressable storage """
         path = "data/" + object_hash[:2] + "/" + object_hash[2:] + hash_suffix
@@ -159,7 +165,7 @@ class Repository(object):
         except KeyError, e:
             print "not found:" , catalog.hash
 
-    def retrieve_and_open_catalog(self, catalog_hash):
+    def _retrieve_and_open_catalog(self, catalog_hash):
         catalog_file = self.retrieve_object(catalog_hash, 'C')
         new_catalog = Catalog(catalog_file, catalog_hash)
         self.opened_catalogs[catalog_hash] = new_catalog
