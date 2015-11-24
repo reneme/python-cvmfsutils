@@ -19,10 +19,10 @@ from _common      import _combine_md5
 import subprocess
 import re
 
-version     = "0.2.0"
+version     = "0.3.0"
 __version__ = version
 
-package_name = "python-cvmfsutils"
+package_name = "cvmfsutils"
 __package_name__ = package_name
 
 class ServerNotInstalled(Exception):

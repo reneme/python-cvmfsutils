@@ -4,11 +4,12 @@
 from setuptools import setup, find_packages
 from os         import path
 
+
 readme_path = path.join(path.dirname(__file__), 'README')
 
 setup(
-  name="python-cvmfsutils",
-  version="0.2.0",
+  name='cvmfsutils',
+  version='0.3.0',
   url='http://cernvm.cern.ch',
   author='Rene Meusel',
   author_email='rene.meusel@cern.ch',
@@ -31,6 +32,7 @@ setup(
     'Topic :: System :: Systems Administration'
   ],
   packages=find_packages(),
+  zip_safe=False,
   test_suite='cvmfs.test',
   tests_require='xmlrunner',
   install_requires=[ # don't forget to adapt the matching RPM dependencies!
