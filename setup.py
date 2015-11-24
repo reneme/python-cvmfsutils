@@ -34,6 +34,7 @@ setup(
     'Topic :: System :: Systems Administration'
   ],
   packages=find_packages(),
+  zip_safe=False,
   test_suite='cvmfs.test',
   tests_require='xmlrunner',
   install_requires=[ # don't forget to adapt the matching RPM dependencies!
