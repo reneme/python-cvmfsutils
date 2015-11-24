@@ -4,11 +4,14 @@
 from setuptools import setup, find_packages
 from os         import path
 
+import cvmfs
+
+
 readme_path = path.join(path.dirname(__file__), 'README')
 
 setup(
-  name="cvmfsutils",
-  version="0.3.0",
+  name=cvmfs.package_name,
+  version=cvmfs.version,
   url='http://cernvm.cern.ch',
   author='Rene Meusel',
   author_email='rene.meusel@cern.ch',
