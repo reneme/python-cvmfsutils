@@ -1,8 +1,8 @@
 0.3.0:
-  * Added Revision class
-  * Moved lookup and listing functionalities from the Repository to the
+  * Add Revision class
+  * Move lookup and listing functionalities from the Repository to the
     Revision class
-  * Fixed catalog retrieval when using different revisions that share catalogs
+  * Fix catalog retrieval when using different revisions that share catalogs
     under the same path
 
 0.2.0:
