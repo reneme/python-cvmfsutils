@@ -6,10 +6,10 @@ This file is part of the CernVM File System auxiliary tools.
 """
 
 import unittest
-from file_sandbox    import FileSandbox
-from mock_repository import MockRepository
 
 import cvmfs
+from file_sandbox    import FileSandbox
+from mock_repository import MockRepository
 
 
 class TestRepositoryWrapper(unittest.TestCase):
@@ -102,16 +102,17 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.mock_repo.serve_via_http()
         repo = cvmfs.open_repository(self.mock_repo.url,
                                      public_key=self.mock_repo.public_key)
-        dirent = repo.lookup('/.cvmfsdirtab')
+        rev = repo.get_current_revision()
+        dirent = rev.lookup('/.cvmfsdirtab')
         self.assertIsNotNone(dirent)
-        dirent = repo.lookup('/bar/4/foo')
+        dirent = rev.lookup('/bar/4/foo')
         self.assertIsNotNone(dirent)
-        dirent = repo.lookup('/bar/4/foobar')
+        dirent = rev.lookup('/bar/4/foobar')
         self.assertIsNone(dirent)
         # with trailing slash this time
-        dirent1 = repo.lookup('/bar/4/foo/')
+        dirent1 = rev.lookup('/bar/4/foo/')
         self.assertIsNotNone(dirent1)
-        dirent2 = repo.lookup('/bar/4/../4/foo/')
+        dirent2 = rev.lookup('/bar/4/../4/foo/')
         self.assertIsNotNone(dirent2)
         self.assertEquals(dirent1.name, dirent2.name)
 
@@ -121,22 +122,38 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.mock_repo.serve_via_http()
         repo = cvmfs.open_repository(self.mock_repo.url,
                                      public_key=self.mock_repo.public_key)
-        dirents = repo.list_directory('/')
+        rev = repo.get_current_revision()
+        dirents = rev.list_directory('/')
         self.assertIsNotNone(dirents)
         self.assertEqual(3, len(dirents))
-        dirents = repo.list_directory('/bar/3')
+        dirents = rev.list_directory('/bar/3')
         self.assertIsNotNone(dirents)
         self.assertEqual(4, len(dirents))
         self.assertEquals('.cvmfscatalog', dirents[0].name)
         self.assertEquals('1', dirents[1].name)
         self.assertEquals('2', dirents[2].name)
         self.assertEquals('3', dirents[3].name)
-        dirents = repo.list_directory('/bar/4/foo')
+        dirents = rev.list_directory('/bar/4/foo')
         self.assertIsNone(dirents)
-        dirents = repo.list_directory('/fakedir')
+        dirents = rev.list_directory('/fakedir')
         self.assertIsNone(dirents)
         # with trailing slash this time
-        dirents = repo.list_directory('/bar/3/')
+        dirents = rev.list_directory('/bar/3/')
         self.assertIsNotNone(dirents)
         self.assertEqual(4, len(dirents))
 
+    def test_revision(self):
+        self.mock_repo.make_valid_whitelist()
+        self.mock_repo.serve_via_http()
+        repo = cvmfs.open_repository(self.mock_repo.url,
+                                     public_key=self.mock_repo.public_key)
+        rev3 = repo.get_current_revision()
+        self.assertEqual(3, rev3.revision_number)
+        dirent = rev3.lookup('/bar/3')
+        self.assertIsNotNone(dirent)
+        self.assertTrue(dirent.is_directory())
+
+        rev1 = repo.get_revision(1)
+        self.assertEqual(1, rev1.revision_number)
+        dirent = rev1.lookup('/bar/3')
+        self.assertIsNone(dirent)
