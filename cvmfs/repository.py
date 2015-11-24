@@ -5,22 +5,22 @@ Created by René Meusel
 This file is part of the CernVM File System auxiliary tools.
 """
 
-import dateutil.parser
 import os
 from datetime import datetime
+
+import dateutil.parser
 from dateutil.tz import tzutc
 
-
 import _common
-from revision import Revision, RevisionIterator
-from fetcher import RemoteFetcher, LocalFetcher
-from manifest import Manifest
-from history import History
-from certificate import Certificate
-from whitelist import Whitelist
-from catalog import Catalog
 from _exceptions import RepositoryNotFound, FileNotFoundInRepository, \
     RepositoryVerificationFailed, HistoryNotFound
+from catalog import Catalog
+from certificate import Certificate
+from fetcher import RemoteFetcher, LocalFetcher
+from history import History
+from manifest import Manifest
+from revision import Revision, RevisionIterator
+from whitelist import Whitelist
 
 
 class Repository(object):
@@ -28,7 +28,7 @@ class Repository(object):
 
     def __init__(self, fetcher):
         self._fetcher = fetcher
-        self.opened_catalogs = {}
+        self._opened_catalogs = {}
         self._read_manifest()
         self._try_to_get_last_replication_timestamp()
         self._try_to_get_replication_state()
@@ -150,8 +150,8 @@ class Repository(object):
 
     def retrieve_catalog(self, catalog_hash):
         """ Download and open a catalog from the repository """
-        if catalog_hash in self.opened_catalogs:
-            return self.opened_catalogs[catalog_hash]
+        if catalog_hash in self._opened_catalogs:
+            return self._opened_catalogs[catalog_hash]
         return self._retrieve_and_open_catalog(catalog_hash)
 
     def retrieve_object(self, object_hash, hash_suffix = ''):
@@ -161,14 +161,14 @@ class Repository(object):
 
     def close_catalog(self, catalog):
         try:
-            del self.opened_catalogs[catalog.hash]
+            del self._opened_catalogs[catalog.hash]
         except KeyError, e:
             print "not found:" , catalog.hash
 
     def _retrieve_and_open_catalog(self, catalog_hash):
         catalog_file = self.retrieve_object(catalog_hash, 'C')
         new_catalog = Catalog(catalog_file, catalog_hash)
-        self.opened_catalogs[catalog_hash] = new_catalog
+        self._opened_catalogs[catalog_hash] = new_catalog
         return new_catalog
 
 

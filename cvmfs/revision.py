@@ -149,8 +149,6 @@ class Revision:
 
     def retrieve_catalog(self, catalog_hash):
         """ Retrieve and open a catalog that belongs to this revision """
-        if catalog_hash in self.repository.opened_catalogs:
-            return self.repository.opened_catalogs[catalog_hash]
         return self.repository.retrieve_catalog(catalog_hash)
 
     def retrieve_root_catalog(self):
