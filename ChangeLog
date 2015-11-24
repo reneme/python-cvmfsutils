@@ -1,3 +1,16 @@
+0.3.0:
+  * Added Revision class
+  * Moved lookup and listing functionalities from the Repository to the
+    Revision class
+  * Fixed catalog retrieval when using different revisions that share catalogs
+    under the same path
+
+0.2.0:
+  * Allow for multi-threaded catalog inspection
+  * Add an optional local disk cache for arbitrary repository objects
+  * Retrieve repository tags by 'name', 'revision number' or 'date'
+  * Inspect catalog tree of historic repository revisions
+
 0.1.0:
   * Initial version
   * Features:
@@ -9,14 +22,3 @@
     * Inspect CernVM-FS file catalog hierarchy
     * List directory entries in a directory, single catalog or whole repository
     * Inspect repository history (CernVM-FS named snapshots)
-
-0.2.0:
-  * Allow for multi-threaded catalog inspection
-  * Add an optional local disk cache for arbitrary repository objects
-  * Retrieve repository tags by 'name', 'revision number' or 'date'
-  * Inspect catalog tree of historic repository revisions
-
-0.3.0:
-  * Added Revision class
-  * Moved lookup and listing functionalities from the Repository to the Revision class
-  * Fixed catalog retrieval when using different revisions that share catalogs under the same path
