@@ -6,10 +6,10 @@ This file is part of the CernVM File System auxiliary tools.
 """
 
 import unittest
-from file_sandbox    import FileSandbox
-from mock_repository import MockRepository
 
 import cvmfs
+from file_sandbox    import FileSandbox
+from mock_repository import MockRepository
 
 
 class TestRepositoryWrapper(unittest.TestCase):
@@ -142,3 +142,18 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.assertIsNotNone(dirents)
         self.assertEqual(4, len(dirents))
 
+    def test_revision(self):
+        self.mock_repo.make_valid_whitelist()
+        self.mock_repo.serve_via_http()
+        repo = cvmfs.open_repository(self.mock_repo.url,
+                                     public_key=self.mock_repo.public_key)
+        rev3 = repo.get_current_revision()
+        self.assertEqual(3, rev3.revision_number)
+        dirent = rev3.lookup('/bar/3')
+        self.assertIsNotNone(dirent)
+        self.assertTrue(dirent.is_directory())
+
+        rev1 = repo.get_revision(1)
+        self.assertEqual(1, rev1.revision_number)
+        dirent = rev1.lookup('/bar/3')
+        self.assertIsNone(dirent)
