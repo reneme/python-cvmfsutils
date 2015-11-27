@@ -157,3 +157,17 @@ class TestRepositoryWrapper(unittest.TestCase):
         self.assertEqual(1, rev1.revision_number)
         dirent = rev1.lookup('/bar/3')
         self.assertIsNone(dirent)
+
+    def test_catalog_lookup(self):
+        self.mock_repo.make_valid_whitelist()
+        self.mock_repo.serve_via_http()
+        repo = cvmfs.open_repository(self.mock_repo.url,
+                                     public_key=self.mock_repo.public_key)
+        rev = repo.get_current_revision()
+        for catalog in rev.catalogs():
+            if catalog.root_prefix == '/bar/4':
+                self.assertIsNone(catalog
+                                  .find_nested_for_path('/bar/4/foobar'))
+                self.assertIsNone(catalog
+                                  .find_nested_for_path('/bar/4/foo'))
+                break
