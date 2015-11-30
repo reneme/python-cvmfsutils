@@ -209,8 +209,8 @@ class Catalog(DatabaseObject):
         nested_catalogs  = self.list_nested()
         best_match       = None
         best_match_score = 0
-        num_slashes      = needle_path.count('/')
         real_needle_path = self._canonicalize_path(needle_path)
+        num_slashes      = real_needle_path.count('/')
         for nested_catalog in nested_catalogs:
             if real_needle_path.startswith(nested_catalog.root_path) and \
                len(nested_catalog.root_path) > best_match_score:
