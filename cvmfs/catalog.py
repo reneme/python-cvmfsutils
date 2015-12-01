@@ -208,8 +208,9 @@ class Catalog(DatabaseObject):
         Checks if one of the siblings of the path is a nested catalog and
         contains the same initial characters
         """
-        return not (needle_path.count('/') == nested_path.count('/') and
-                    needle_path != nested_path)
+        return len(needle_path) == len(nested_path) or \
+            (len(needle_path) > len(nested_path) and
+                needle_path[len(nested_path)] == '/')
 
     def find_nested_for_path(self, needle_path):
         """ Find the best matching nested CatalogReference for a given path """
