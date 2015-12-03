@@ -203,6 +203,14 @@ class Catalog(DatabaseObject):
         """ returns the embedded catalog statistics (if available) """
         return CatalogStatistics(self)
 
+    def _path_sanitized(self, needle_path, nested_path):
+        """
+        Checks if one of the siblings of the path is a nested catalog and
+        contains the same initial characters
+        """
+        return len(needle_path) == len(nested_path) or \
+            (len(needle_path) > len(nested_path) and
+                needle_path[len(nested_path)] == '/')
 
     def find_nested_for_path(self, needle_path):
         """ Find the best matching nested CatalogReference for a given path """
@@ -211,8 +219,10 @@ class Catalog(DatabaseObject):
         best_match_score = 0
         real_needle_path = self._canonicalize_path(needle_path)
         for nested_catalog in nested_catalogs:
-            if real_needle_path.startswith(nested_catalog.root_path) and \
-                len(nested_catalog.root_path) > best_match_score:
+            if real_needle_path.startswith(nested_catalog.root_path) and    \
+               len(nested_catalog.root_path) > best_match_score and         \
+                self._path_sanitized(real_needle_path,
+                                     nested_catalog.root_path):
                     best_match_score = len(nested_catalog.root_path)
                     best_match       = nested_catalog
         return best_match
