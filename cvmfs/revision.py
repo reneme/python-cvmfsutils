@@ -128,7 +128,7 @@ class Revision:
         self._tag = tag
 
     def __str__(self):
-        return '<Revision ' + self.revision_number \
+        return '<Revision ' + str(self.revision_number) \
                + ' - ' + self.root_hash + '>'
 
     @property
