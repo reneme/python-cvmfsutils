@@ -63,6 +63,8 @@ class Manifest(RootFile):
             self.micro_catalog       = data
         elif key_char == "G":
             self.garbage_collectable = (data == "yes")
+        elif key_char == "A":
+            self.bootstrap_shortcuts = (data == "yes")
         else:
             raise UnknownManifestField(key_char)
 
