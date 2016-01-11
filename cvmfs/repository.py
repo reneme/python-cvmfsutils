@@ -119,6 +119,9 @@ class Repository(object):
         history_db = self.retrieve_object(self.manifest.history_database, 'H')
         return History(history_db)
 
+    def has_repoinfo(self):
+        return self.manifest.has_repoinfo()
+
     def get_current_revision(self):
         return self._get_revision_by_number(self.manifest.revision)
 
