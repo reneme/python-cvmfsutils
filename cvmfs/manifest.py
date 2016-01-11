@@ -65,6 +65,10 @@ class Manifest(RootFile):
             self.garbage_collectable = (data == "yes")
         elif key_char == "A":
             self.bootstrap_shortcuts = (data == "yes")
+        elif key_char == "M":
+            self.metainfo            = data
+        elif key_char == "V":
+            self.cvmfs_version       = data
         else:
             raise UnknownManifestField(key_char)
 
