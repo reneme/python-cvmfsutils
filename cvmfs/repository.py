@@ -21,6 +21,7 @@ from history import History
 from manifest import Manifest
 from revision import Revision, RevisionIterator
 from whitelist import Whitelist
+from repoinfo import RepoInfo
 
 
 class Repository(object):
@@ -121,6 +122,12 @@ class Repository(object):
 
     def has_repoinfo(self):
         return self.manifest.has_repoinfo()
+
+    def retrieve_repoinfo(self):
+        if not self.has_repoinfo():
+            raise RepoInfoNotFound(self)
+        repoinfo = self.retrieve_object(self.manifest.repoinfo, 'M')
+        return RepoInfo(self.fqrn, repoinfo)
 
     def get_current_revision(self):
         return self._get_revision_by_number(self.manifest.revision)
