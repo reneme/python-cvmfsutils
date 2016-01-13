@@ -33,6 +33,7 @@ class TestRepoInfo(unittest.TestCase):
         self.assertTrue(isinstance(repo, cvmfs.Repository))
         repoinfo = repo.retrieve_repoinfo()
         self.assertTrue(isinstance(repoinfo, cvmfs.RepoInfo))
+        self.assertEqual(repo.manifest.repository_name, repoinfo.fqrn)
 
 
     def test_read_basic_repoinfo(self):
