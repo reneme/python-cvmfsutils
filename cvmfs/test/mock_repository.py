@@ -123,6 +123,10 @@ class MockRepository:
 
 ################################################################################
 
+#
+# Note: This packed up repository can be recreated by the script
+#       aux/make_mock_repo.sh
+#
 
     repo_name = "test.cern.ch"
 
