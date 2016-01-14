@@ -43,6 +43,13 @@ class HistoryNotFound(Exception):
     def __str__(self):
         return repr(self.repo)
 
+class RepoInfoNotFound(Exception):
+    def __init__(self, repo):
+        self.repo = repo
+
+    def __str__(self):
+        return repr(self.repo)
+
 class CannotReplicate(Exception):
     def __init__(self, repo):
         self.repo = repo

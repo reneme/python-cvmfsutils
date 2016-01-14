@@ -37,6 +37,10 @@ class Manifest(RootFile):
         return hasattr(self, 'history_database')
 
 
+    def has_repoinfo(self):
+        return hasattr(self, 'repoinfo')
+
+
     def _read_line(self, line):
         """ Parse lines that appear in .cvmfspublished """
         key_char = line[0]
@@ -66,7 +70,7 @@ class Manifest(RootFile):
         elif key_char == "A":
             self.bootstrap_shortcuts = (data == "yes")
         elif key_char == "M":
-            self.metainfo            = data
+            self.repoinfo            = data
         elif key_char == "V":
             self.cvmfs_version       = data
         else:
