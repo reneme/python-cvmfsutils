@@ -269,6 +269,43 @@ class Catalog(DatabaseObject):
                             LIMIT 1;")
         return self._make_directory_entry(res[0]) if len(res) == 1 else None
 
+    def backtrace_path_split_md5(self, md5path_1, md5path_2):
+        """ finds the file path associated with a given MD5 hash """
+        catalog_root_path = self.root_prefix if self.root_prefix != "/" else ""
+        root_md5_hash     = _split_md5(hashlib.md5(catalog_root_path).digest())
+        result = ""
+        while True:
+            res = self.run_sql("SELECT parent_1, parent_2, name          \
+                                FROM catalog                             \
+                                WHERE md5path_1 = " + str(md5path_1) + " \
+                                  AND md5path_2 = " + str(md5path_2) + ";")
+            if len(res) != 1:
+                break
+
+            md5parent_1, md5parent_2 = res[0][0], res[0][1]
+            if md5parent_1 == root_md5_hash[0] and \
+               md5parent_2 == root_md5_hash[1]:
+                break
+
+            result = res[0][2] + ("/" + result if result != "" else "")
+            md5path_1 = md5parent_1
+            md5path_2 = md5parent_2
+        return self.root_prefix + result if result != "" else None
+
+    def backtrace_content_hash(self, content_hash):
+        """ Try to find file paths that reference a given content hash """
+        # TODO(rmeusel): currently this only works for SHA-1 content hashes
+        bulk_chunks = self.run_sql("SELECT md5path_1, md5path_2 \
+                                    FROM catalog                \
+                                    WHERE lower(hex(hash)) = '" +
+                                                            content_hash + "';")
+        partial_chunks = self.run_sql("SELECT md5path_1, md5path_2 \
+                                       FROM chunks                 \
+                                       WHERE lower(hex(hash)) = '" +
+                                                            content_hash + "';")
+        return list({ self.backtrace_path_split_md5(md5pair[0], md5pair[1]) \
+                    for md5pair in bulk_chunks + partial_chunks })
+
 
     def is_root(self):
         """ Checks if this is the root catalog (based on the root prefix) """
