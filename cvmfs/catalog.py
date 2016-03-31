@@ -263,9 +263,9 @@ class Catalog(DatabaseObject):
     def find_directory_entry_split_md5(self, md5path_1, md5path_2):
         """ Finds the DirectoryEntry for the given split MD5 hashed path """
         res = self.run_sql("SELECT " + DirectoryEntry.catalog_db_fields() + " \
-                            FROM catalog                                       \
-                            WHERE md5path_1 = " + str(md5path_1) + " AND       \
-                                  md5path_2 = " + str(md5path_2) + "           \
+                            FROM catalog                                      \
+                            WHERE md5path_1 = " + str(md5path_1) + " AND      \
+                                  md5path_2 = " + str(md5path_2) + "          \
                             LIMIT 1;")
         return self._make_directory_entry(res[0]) if len(res) == 1 else None
 
